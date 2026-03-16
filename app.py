@@ -17,34 +17,24 @@ st.markdown("""
 Welcome to our beta exploratory dashboard. The **15-Minute City** is an urban planning concept where all essential daily needs are reachable within a short walk. 
 Our research asks an important question: **Does high accessibility come with a premium price tag, pricing out students?**
 """)
-
 @st.cache_data
 def load_data():
-    arrondissements = [str(i) for i in range(1, 21)]
-    lats = [48.8626, 48.8676, 48.8628, 48.8543, 48.8448, 48.8491, 48.8561, 48.8727, 48.8771, 48.8761, 
-            48.8594, 48.8352, 48.8283, 48.8296, 48.8400, 48.8603, 48.8873, 48.8925, 48.8879, 48.8631]
-    lons = [2.3364, 2.3441, 2.3600, 2.3576, 2.3471, 2.3324, 2.3125, 2.3125, 2.3374, 2.3607, 
-            2.3786, 2.4025, 2.3622, 2.3265, 2.2928, 2.2621, 2.3067, 2.3444, 2.3849, 2.3984]
+    final_df = pd.read_csv("paris_80_quartiers_final.csv")
     
-    np.random.seed(42)
-    base_rent = np.array([36, 35, 34, 35, 36, 37, 38, 36, 32, 30, 29, 27, 26, 28, 29, 34, 28, 25, 23, 24])
-    avg_rent = np.round(base_rent + np.random.normal(0, 1, 20), 1)
+    final_df = final_df.rename(columns={'quartier': 'Arrondissement'})
     
-    base_shops = np.array([850, 800, 750, 750, 700, 850, 550, 700, 950, 900, 950, 600, 550, 650, 750, 500, 700, 800, 500, 550])
-    shop_count = np.round(base_shops + np.random.normal(0, 40, 20)).astype(int)
-
-    final_df = pd.DataFrame({
-        'Arrondissement': arrondissements,
-        'Lat': lats,
-        'Lon': lons,
-        'avg_rent': avg_rent,
-        'shop_count': shop_count
-    })
+    final_df['Arrondissement'] = final_df['Arrondissement'].astype(str)
     
-    final_df['value_score'] = (final_df['shop_count'] / final_df['avg_rent']).round(2)
+    if 'Lat' not in final_df.columns:
+        np.random.seed(42)
+        # Generate 80 random points roughly within the Paris bounding box
+        final_df['Lat'] = np.random.uniform(48.82, 48.89, len(final_df))
+        final_df['Lon'] = np.random.uniform(2.27, 2.40, len(final_df))
+        
     return final_df
 
 final_df = load_data()
+
 
 with st.sidebar:
     st.header("🎛️ Dashboard Controls")
@@ -52,12 +42,12 @@ with st.sidebar:
     max_rent = st.slider("Budget: Max Rent (€/m²)", 
                          min_value=float(final_df['avg_rent'].min()), 
                          max_value=float(final_df['avg_rent'].max()), 
-                         value=32.0, step=0.5)
+                         value=float(final_df['avg_rent'].mean()), step=0.5)
 
     min_shops = st.slider("Need: Min Shop Count", 
                           min_value=int(final_df['shop_count'].min()), 
                           max_value=int(final_df['shop_count'].max()), 
-                          value=600, step=10)
+                          value=int(final_df['shop_count'].median()), step=10)
     
     st.divider()
     
@@ -76,9 +66,9 @@ if not filtered_df.empty:
     best_value_arr = filtered_df.loc[filtered_df['value_score'].idxmax()]
     
     colA, colB, colC = st.columns(3)
-    colA.metric("Neighborhoods Matching Criteria", len(filtered_df), "Out of 20")
+    colA.metric("Neighborhoods Matching Criteria", len(filtered_df), "Out of 80") 
     colB.metric("Avg Rent of Selection", f"{filtered_df['avg_rent'].mean():.1f} €/m²")
-    colC.metric("Top 'Sweet Spot' Arrondissement", f"Paris {best_value_arr['Arrondissement']}e", f"Value Score: {best_value_arr['value_score']}")
+    colC.metric("Top 'Sweet Spot' Quartier", f"ID: {best_value_arr['Arrondissement']}", f"Value Score: {best_value_arr['value_score']}")
 else:
     st.warning("No neighborhoods match your current filters. Try increasing your budget or lowering your shop requirements.")
 
