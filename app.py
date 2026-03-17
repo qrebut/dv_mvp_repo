@@ -227,3 +227,15 @@ if not filtered_df.empty:
         use_container_width=True,
         hide_index=True
     )
+
+st.markdown("---")
+
+# --- 9. LIMITATIONS ---
+st.subheader("🚧 Project Limitations")
+st.markdown("""
+While this tool provides valuable exploratory insights, our methodology has a few limitations to keep in mind:
+* **Geographic Simplification:** Due to data format constraints, Quartiers are currently represented as centroid dots on the map rather than exact Choropleth polygons.
+* **Isochrone Accuracy:** We calculate based on raw shop counts within administrative boundaries rather than exact 15-minute walking radii via network graphs.
+* **Shop Weighting:** Currently, a massive supermarket and a small bakery carry the exact same weight (1 shop). Future iterations should weigh amenities by utility capacity.
+* **Data Completeness:** Crucial health services, such as pharmacies, were not included in the primary dataset we used, meaning the "15-minute" picture is partially incomplete. 
+""")
